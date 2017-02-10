@@ -1,18 +1,13 @@
 import glob
 import pandas as pd
 
+def get_job_name(file_name):
+    """Extract the name of the job from the logfile path."""
+    job_name = '_'.join(log_file_path.strip('.dlg').split('/')[-1].split('_')[0:-2])
+    return job_name
+
 def import_logfile(file_name):
-    """Read in an AJA logfile to a pandas.DataFrame object.
-
-    Parameters
-    ----------
-    file_name : string
-        Path to the logfile.
-
-    Returns
-    -------
-    df : pandas.DataFrame
-        DataFrame object indexed by datetime."""
+    """Read in an AJA logfile to a pandas.DataFrame object indexed by datetime."""
     df = pd.read_csv(file_name, sep='\t', parse_dates=[[0,1]], infer_datetime_format=True, index_col=0)
     return df
 
