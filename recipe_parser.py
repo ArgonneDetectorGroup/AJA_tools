@@ -1,4 +1,20 @@
 import glob
+import pandas as pd
+
+def import_logfile(file_name):
+    """Read in an AJA logfile to a pandas.DataFrame object.
+
+    Parameters
+    ----------
+    file_name : string
+        Path to the logfile.
+
+    Returns
+    -------
+    df : pandas.DataFrame
+        DataFrame object indexed by datetime."""
+    df = pd.read_csv(file_name, sep='\t', parse_dates=[[0,1]], infer_datetime_format=True, index_col=0)
+    return df
 
 def get_recipe(job_file_path, recipe_folder_path):
     """Read in an AJA job file and return a list of AJA recipe steps.
