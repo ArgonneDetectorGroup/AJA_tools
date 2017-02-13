@@ -3,7 +3,7 @@ import pandas as pd
 
 def get_job_name(file_name):
     """Extract the name of the job from the logfile path."""
-    job_name = '_'.join(log_file_path.strip('.dlg').split('/')[-1].split('_')[0:-2])
+    job_name = '_'.join(file_name.strip('.dlg').split('/')[-1].split('_')[0:-2])
     return job_name
 
 def import_logfile(file_name):
@@ -93,7 +93,7 @@ def get_recipe(job_file_path, recipe_folder_path):
     raw_recipe.sort(key=lambda x: x[0])
 
     #Strip out the index numbers and return just the final list
-    parsed_recipe = list(zip(*raw_recipe_no_junk)[1])
+    parsed_recipe = list(list(zip(*raw_recipe_no_junk))[1])
 
 
 
