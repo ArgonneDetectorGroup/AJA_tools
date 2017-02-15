@@ -131,6 +131,9 @@ def get_recipe(job_file_path, recipe_folder_path=None):
     else:
         recipes = []
 
+    #Extract job_name from job file path
+    job_name = job_file_path.strip('.ajp').split('/')[-1]
+
     #Open the job file up and read it in
     with open(job_file_path, 'r') as f:
         raw_job = f.read()
@@ -160,7 +163,12 @@ def get_recipe(job_file_path, recipe_folder_path=None):
                 raw_recipe.append((start_ix, recipe, recipe in recipes))
                 raw_recipe.append((next_ix, delim, None))
                 start_ix = next_ix + term_len
+            elif start_ix < len(raw_job)-1:
+                recipe = raw_job[start_ix:]
+                raw_recipe.append((start_ix, recipe, recipe in recipes))
+                start_ix = -1
             else:
+                warnings.warn('Job file may be corrupt, missing final recipe step: '+ job_name, UserWarning)
                 start_ix = -1
 
     #Make one more pass through to handle duplicates that
@@ -176,7 +184,7 @@ def get_recipe(job_file_path, recipe_folder_path=None):
 
     #If one or more recipes don't exist in the recipes folder, then warn
     if recipe_folder_path is not None:
-        all_recipes_exist = all(list(list(zip(*raw_recipe_no_junk))[2]))
+        all_recipes_exist = all(list(zip(*raw_recipe_no_junk))[2])
 
         if not all_recipes_exist:
             warnings.warn("Not all recipes were located. See output dict for details.", UserWarning)
@@ -186,6 +194,7 @@ def get_recipe(job_file_path, recipe_folder_path=None):
     output_dict = {'recipe' : parsed_recipe,
                    'raw_recipe' : raw_recipe,
                    'raw_job' : raw_job,
-                   'info' : info_string}
+                   'info' : info_string,
+                   'job_name' : job_name}
 
     return output_dict
