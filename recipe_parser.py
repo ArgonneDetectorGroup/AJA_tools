@@ -70,16 +70,14 @@ def get_job(logfile_path, jobs_dict={}, job_folder_path=None):
 
     Note
     ----
-    If job_folder_path is not specified, then jobs_dict must be passed. If both
-    are specified, then jobs will be loaded from the job folder, and updated
-    from the jobs_dict. Any matching names will be overwritten by the values in
-    jobs_dict."""
+    If job_folder_path or jobs_dict is passed, get_job will check to see if the
+    job name corresponds to a matching job file. If both are specified, then
+    jobs will be loaded from the job folder, and updated from the jobs_dict. Any
+    matching names will be overwritten by the values in jobs_dict."""
 
 
 
     if job_folder_path is None:
-        assert len(jobs_dict) > 0, "Must supply either path to job folder or dict of jobs."
-
         #Initialize and empty dict
         jobs = {}
     else:
@@ -102,13 +100,23 @@ def get_job(logfile_path, jobs_dict={}, job_folder_path=None):
 
     return job_name, job_file_path
 
-def get_recipe(job_file_path, recipe_list=None, recipe_folder_path=None):
+def get_recipe(file_path, jobs_dict={}, jobs_folder_path=None, recipe_list=[], recipe_folder_path=None):
     """Read in an AJA job file and return a list of AJA recipe steps.
 
     Parameters
     ----------
-    job_file_path : string
-        Path to the job file. Usually has extension '.ajp'
+    file_path : string
+        Path to the job file (extension '.ajp') or log file (extension '.dlg').
+        If file_path points to a log file, then a path to a jobs folder or a
+        dict of {job_name:job_file_path} must be passed.
+
+    Keyword Arguments
+    -----------------
+    jobs_dict : dict (optional)
+        Dict of jobs returned by build_jobs_dict.
+
+    jobs_folder_path : string (optional)
+        Path to folder of jobs.
 
     recipe_list : list (optional)
         List of recipes.
@@ -126,18 +134,18 @@ def get_recipe(job_file_path, recipe_list=None, recipe_folder_path=None):
               This includes all the binary separators between recipe steps. Bool
               specifies whether the recipe step was found in the recipes folder.
             * 'raw_job' : The raw output of the AJA job file.
+            * 'info' : Format of raw_recipe tuples.
+            * 'job_name' : The name of the job from the job file.
 
     Note
     ----
-    If recipe_folder_path is not specified, then recipe_list must be passed. If both
-    are specified, then recipes will be loaded from the recipe folder, and updated
-    from the recipe_list."""
+    If recipe_folder_path and/or recipe_list is passed then get_recipe will
+    check to see if the recipes extracted from the job file exists in the list
+    of recipes."""
 
     info_string = "raw_recipe format is: (string index, string, recipe exists?)"
 
     if recipe_folder_path is None:
-        assert len(recipe_list) > 0, "Must supply either path to recipe folder or recipe list."
-
         #Initialize empty list
         recipes = []
     else:
@@ -146,9 +154,16 @@ def get_recipe(job_file_path, recipe_list=None, recipe_folder_path=None):
     #Add on whatever extra recipes are passed in
     recipes = set(recipes+recipe_list)
 
+    if file_path.split('.')[-1] == 'dlg':
+        assert (len(jobs_dict) > 0) or (jobs_folder_path is not None), "Must pass either jobs_dict or jobs_folder_path."
 
-    #Extract job_name from job file path
-    job_name = job_file_path.strip('.ajp').split('/')[-1]
+        job_name, job_file_path = get_job(file_path, jobs_folder_path)
+    elif file_path.split('.')[-1] == 'ajp':
+        #Extract job_name from job file path
+        job_file_path = file_path
+        job_name = job_file_path.strip('.ajp').split('/')[-1]
+    else:
+        raise NameError("Unknown filetype: "+file_path.split('.')[-1])
 
     #Open the job file up and read it in
     with open(job_file_path, 'r') as f:
@@ -199,7 +214,7 @@ def get_recipe(job_file_path, recipe_list=None, recipe_folder_path=None):
     parsed_recipe = list(list(zip(*raw_recipe_no_junk))[1])
 
     #If one or more recipes don't exist in the recipes folder, then warn
-    if recipe_folder_path is not None:
+    if len(recipes) > 0:
         all_recipes_exist = all(list(zip(*raw_recipe_no_junk))[2])
 
         if not all_recipes_exist:
