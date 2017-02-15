@@ -100,7 +100,7 @@ def get_job(logfile_path, jobs_dict={}, job_folder_path=None):
 
     return job_name, job_file_path
 
-def get_recipe(file_path, jobs_dict={}, jobs_folder_path=None, recipe_list=[], recipe_folder_path=None):
+def get_recipe(file_path, jobs_dict={}, job_folder_path=None, recipe_list=[], recipe_folder_path=None):
     """Read in an AJA job file and return a list of AJA recipe steps.
 
     Parameters
@@ -115,7 +115,7 @@ def get_recipe(file_path, jobs_dict={}, jobs_folder_path=None, recipe_list=[], r
     jobs_dict : dict (optional)
         Dict of jobs returned by build_jobs_dict.
 
-    jobs_folder_path : string (optional)
+    job_folder_path : string (optional)
         Path to folder of jobs.
 
     recipe_list : list (optional)
@@ -157,7 +157,8 @@ def get_recipe(file_path, jobs_dict={}, jobs_folder_path=None, recipe_list=[], r
     if file_path.split('.')[-1] == 'dlg':
         assert (len(jobs_dict) > 0) or (jobs_folder_path is not None), "Must pass either jobs_dict or jobs_folder_path."
 
-        job_name, job_file_path = get_job(file_path, jobs_folder_path)
+        job_name, job_file_path = get_job(file_path, jobs_dict=jobs_dict, job_folder_path=job_folder_path)
+
     elif file_path.split('.')[-1] == 'ajp':
         #Extract job_name from job file path
         job_file_path = file_path
@@ -165,61 +166,67 @@ def get_recipe(file_path, jobs_dict={}, jobs_folder_path=None, recipe_list=[], r
     else:
         raise NameError("Unknown filetype: "+file_path.split('.')[-1])
 
-    #Open the job file up and read it in
-    with open(job_file_path, 'r') as f:
-        raw_job = f.read()
+    if job_file_path is not None:
+        #Open the job file up and read it in
+        with open(job_file_path, 'r') as f:
+            raw_job = f.read()
 
-    #Initalize a few more empty lists
-    raw_recipe = []
-    parsed_recipe = []
+        #Initalize a few more empty lists
+        raw_recipe = []
+        parsed_recipe = []
 
-    #Parse through the recipe file and extract the information
-    #Recipe files have an 8 character initial string followed by recipe steps.
-    #Each recipe step is the name of a recipe file followed by a 4 char terminator.
-    #The initializer and terminators all start with '\x00'
-    init_len = 8
-    term_len = 4
-    term_char = '\x00'
-    start_ix = 0
-    while start_ix > -1:
-        if start_ix == 0:
-            raw_recipe.append((0, raw_job[0:init_len], None))
-            start_ix = init_len
-        else:
-            next_ix = raw_job.find(term_char, start_ix+1)
-            if next_ix > -1:
-                recipe = raw_job[start_ix:next_ix]
-                delim = raw_job[next_ix:next_ix+term_len]
-
-                raw_recipe.append((start_ix, recipe, recipe in recipes))
-                raw_recipe.append((next_ix, delim, None))
-                start_ix = next_ix + term_len
-            elif start_ix < len(raw_job)-1:
-                recipe = raw_job[start_ix:]
-                raw_recipe.append((start_ix, recipe, recipe in recipes))
-                start_ix = -1
+        #Parse through the recipe file and extract the information
+        #Recipe files have an 8 character initial string followed by recipe steps.
+        #Each recipe step is the name of a recipe file followed by a 4 char terminator.
+        #The initializer and terminators all start with '\x00'
+        init_len = 8
+        term_len = 4
+        term_char = '\x00'
+        start_ix = 0
+        while start_ix > -1:
+            if start_ix == 0:
+                raw_recipe.append((0, raw_job[0:init_len], None))
+                start_ix = init_len
             else:
-                warnings.warn('Job file may be corrupt, missing final recipe step: '+ job_name, UserWarning)
-                start_ix = -1
+                next_ix = raw_job.find(term_char, start_ix+1)
+                if next_ix > -1:
+                    recipe = raw_job[start_ix:next_ix]
+                    delim = raw_job[next_ix:next_ix+term_len]
 
-    #Make one more pass through to handle duplicates that
+                    raw_recipe.append((start_ix, recipe, recipe in recipes))
+                    raw_recipe.append((next_ix, delim, None))
+                    start_ix = next_ix + term_len
+                elif start_ix < len(raw_job)-1:
+                    recipe = raw_job[start_ix:]
+                    raw_recipe.append((start_ix, recipe, recipe in recipes))
+                    start_ix = -1
+                else:
+                    warnings.warn('Job file may be corrupt, missing final recipe step: '+ job_name, UserWarning)
+                    start_ix = -1
 
-    #Make a copy of the list of recipes, this is what we care about
-    raw_recipe_no_junk = []
-    for recipe in raw_recipe:
-        if recipe[1][0] != '\x00':
-            raw_recipe_no_junk.append(recipe)
+        #Make one more pass through to handle duplicates that
 
-    #Strip out the index numbers and return just the final list
-    parsed_recipe = list(list(zip(*raw_recipe_no_junk))[1])
+        #Make a copy of the list of recipes, this is what we care about
+        raw_recipe_no_junk = []
+        for recipe in raw_recipe:
+            if recipe[1][0] != '\x00':
+                raw_recipe_no_junk.append(recipe)
 
-    #If one or more recipes don't exist in the recipes folder, then warn
-    if len(recipes) > 0:
-        all_recipes_exist = all(list(zip(*raw_recipe_no_junk))[2])
+        #Strip out the index numbers and return just the final list
+        parsed_recipe = list(list(zip(*raw_recipe_no_junk))[1])
 
-        if not all_recipes_exist:
-            warnings.warn("Not all recipes were located. See output dict for details.", UserWarning)
+        #If one or more recipes don't exist in the recipes folder, then warn
+        if len(recipes) > 0:
+            all_recipes_exist = all(list(zip(*raw_recipe_no_junk))[2])
 
+            if not all_recipes_exist:
+                warnings.warn("Not all recipes were located. See output dict for details.", UserWarning)
+
+    else:
+        warnings.warn("Job file not found for: "+repr(job_name)+". Output dict contains None.")
+        parsed_recipe = []
+        raw_recipe = [(None, None, None)]
+        raw_job = ''
 
 
     output_dict = {'recipe' : parsed_recipe,
