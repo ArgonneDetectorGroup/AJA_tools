@@ -65,7 +65,7 @@ def get_job(logfile_path, jobs_dict={}, job_folder_path=None):
     Returns
     -------
     output : tuple
-        Tuple of form (job_name, job_folder_path)
+        Tuple of form (job_name, job_file_path)
 
 
     Note
@@ -102,13 +102,16 @@ def get_job(logfile_path, jobs_dict={}, job_folder_path=None):
 
     return job_name, job_file_path
 
-def get_recipe(job_file_path, recipe_folder_path=None):
+def get_recipe(job_file_path, recipe_list=None, recipe_folder_path=None):
     """Read in an AJA job file and return a list of AJA recipe steps.
 
     Parameters
     ----------
     job_file_path : string
         Path to the job file. Usually has extension '.ajp'
+
+    recipe_list : list (optional)
+        List of recipes.
 
     recipe_folder_path : string (optional)
         Path to the folder containing all the extant AJA recipe step files.
@@ -122,14 +125,27 @@ def get_recipe(job_file_path, recipe_folder_path=None):
             * 'raw_recipe' : List of tuples containing (index, recipe step, Bool).
               This includes all the binary separators between recipe steps. Bool
               specifies whether the recipe step was found in the recipes folder.
-            * 'raw_job' : The raw output of the AJA job file."""
+            * 'raw_job' : The raw output of the AJA job file.
+
+    Note
+    ----
+    If recipe_folder_path is not specified, then recipe_list must be passed. If both
+    are specified, then recipes will be loaded from the recipe folder, and updated
+    from the recipe_list."""
 
     info_string = "raw_recipe format is: (string index, string, recipe exists?)"
 
-    if recipe_folder_path is not None:
-        recipes = build_recipe_list(recipe_folder_path)
-    else:
+    if recipe_folder_path is None:
+        assert len(recipe_list) > 0, "Must supply either path to recipe folder or recipe list."
+
+        #Initialize empty list
         recipes = []
+    else:
+        recipes = build_recipe_list(recipe_folder_path)
+
+    #Add on whatever extra recipes are passed in
+    recipes = set(recipes+recipe_list)
+
 
     #Extract job_name from job file path
     job_name = job_file_path.strip('.ajp').split('/')[-1]
