@@ -46,3 +46,64 @@ def count_recipes(recipe_list, logs):
     recipe_freqs.sort(key=lambda x : x[1], reverse=True)
 
     return recipe_freqs
+
+
+def filter_logs(logs_dict, target_recipe, read_data = True, read_layers = True, force_overwrite = False):
+    """Filter a dict of logfiles to only include those containing target_recipe.
+
+    Parameters
+    ----------
+    logs_dict : dict
+        Dictionary of logfiles where filename is key and value is dictionary
+        with format identical to that returend by recipe_parser.get_recipe().
+
+    target_recipe : string
+        The name of the recipe to filter by.
+
+    Keyword Arguments
+    -----------------
+    read_data : bool
+        Whether or not to load the data from the logfile and add it to
+        filtered_dict with key 'data'. Default is True.
+
+    read_layers : bool
+        Whether or not to parse the recipe list to find the indices of occurence
+        of target_recipe in the job. Indices are returned as a tuple and stored
+        in the layers dict (key 'layers') with key target_recipe. Default is
+        True.
+
+    force_overwrite : bool
+        By default, filter_logs checks if data and layers have already been
+        loaded to avoid doubling the effort. setting force_overwrite to True
+        will reload the data.
+
+    """
+
+    #Initialize empty dict
+    filtered_logs = {}
+
+    for logfile in logs_dict.keys():
+        if target_recipe in logs_dict[logfile]['recipe']:
+
+            #get_recipe will return None if there is no extant job file
+            if logs_dict[logfile]['recipe'] is not None:
+                filtered_logs[logfile] = logs_dict[logfile]
+
+                if read_data:
+                    if ('data' not in filtered_logs[logfile].keys()) or (force_overwrite == True):
+                        filtered_logs[logfile]['data'] = import_logfile(logfile)
+
+                if read_layers:
+                    if 'layers' not in filtered_logs[logfile].keys():
+                        filtered_logs[logfile]['layers'] = {}
+
+                    if (target_recipe not in filtered_logs[logfile]['layers'].keys()) or (force_overwrite == True):
+                        layers = []
+                        for rix, recipe in enumerate(filtered_logs[logfile]['recipe']):
+                            if recipe == target_recipe:
+                                layers.append(rix+1)
+
+                        #Convert to tuple, as this list should be immutable
+                        filtered_logs[logfile]['layers'][target_recipe] = tuple(layers)
+
+    return filtered_logs
