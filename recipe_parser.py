@@ -1,6 +1,10 @@
 import warnings
 import glob
 
+class RecipeWarning(UserWarning):
+    """Warnings related to recipes."""
+    pass
+
 def build_jobs_dict(job_folder_path):
     """Build a dictionary of job_name : job_file_path from a directory of job
     files."""
@@ -18,7 +22,7 @@ def build_jobs_dict(job_folder_path):
             jobs[(job_file.strip('.ajp').split('/')[-1])] = job_file
 
     if len(jobs) == 0:
-        warnings.warn("No job files found in directory", UserWarning)
+        warnings.warn("No job files found in directory", RecipeWarning)
 
     return jobs
 
@@ -42,7 +46,7 @@ def build_recipe_list(recipe_folder_path):
             recipes.append(recipe_file.split('.rcp')[0].split('/')[-1])
 
     if len(recipes) == 0:
-        warnings.warn("No recipes found in directory!", UserWarning)
+        warnings.warn("No recipes found in directory!", RecipeWarning)
 
     return recipes
 
@@ -96,7 +100,7 @@ def get_job(logfile_path, jobs_dict={}, job_folder_path=None):
         job_file_path = None
 
     if job_file_path is None:
-        warnings.warn("No matching job found!", UserWarning)
+        warnings.warn("No matching job found!", RecipeWarning)
 
     return job_name, job_file_path
 
@@ -201,7 +205,7 @@ def get_recipe(file_path, jobs_dict={}, job_folder_path=None, recipe_list=[], re
                     raw_recipe.append((start_ix, recipe, recipe in recipes))
                     start_ix = -1
                 else:
-                    warnings.warn('Job file may be corrupt, missing final recipe step: '+ job_name, UserWarning)
+                    warnings.warn('Job file may be corrupt, missing final recipe step: '+ job_name, RecipeWarning)
                     start_ix = -1
 
         #Make one more pass through to handle duplicates that
@@ -220,10 +224,10 @@ def get_recipe(file_path, jobs_dict={}, job_folder_path=None, recipe_list=[], re
             all_recipes_exist = all(list(zip(*raw_recipe_no_junk))[2])
 
             if not all_recipes_exist:
-                warnings.warn("Not all recipes were located. See output dict for details.", UserWarning)
+                warnings.warn("Not all recipes were located. See output dict for details.", RecipeWarning)
 
     else:
-        warnings.warn("Job file not found for: "+repr(job_name)+". Output dict contains None.")
+        warnings.warn("Job file not found for: "+repr(job_name)+". Output dict contains None.", RecipeWarning)
         parsed_recipe = []
         raw_recipe = [(None, None, None)]
         raw_job = ''

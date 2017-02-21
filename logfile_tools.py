@@ -5,6 +5,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+from .recipe_parser import RecipeWarning
+
 def import_logfile(file_name):
     """Read in an AJA logfile to a pandas.DataFrame object indexed by datetime."""
     df = pd.read_csv(file_name, sep='\t', parse_dates=[[0,1]], date_parser=dp.parse, index_col=0)
@@ -273,7 +275,7 @@ def get_means(logs_dict, target_recipe, **kwargs):
                         stdevs[key].append(col_df[avg_start:avg_end].std())
                 else:
                     #Sometimes a job is cancelled before the planned recipe was executed
-                    warnings.warn(logfile+" aborted early! May not be any data to plot.", UserWarning)
+                    warnings.warn(logfile+" aborted early! May not be any data to plot.", RecipeWarning)
 
     output_dict = { 'means':means,
                     'stdevs':stdevs,
@@ -595,7 +597,7 @@ def overplot_all(logs_dict, target_recipe, **kwargs):
 
                 else:
                     #Sometimes a job is cancelled before the planned recipe was executed
-                    warnings.warn(logfile+" aborted early! May not be any data to plot.", UserWarning)
+                    warnings.warn(logfile+" aborted early! May not be any data to plot.", RecipeWarning)
 
 
     fig.tight_layout()
