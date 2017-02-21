@@ -18,7 +18,7 @@ Description of files
 Installation
 ------------
 Plans are in progress to make these scripts into a proper package hosted on pip.
-For now, you can just do something like:
+For now, you can just clone this repository into some directory and then do something like:
 
 .. code:: python
 
