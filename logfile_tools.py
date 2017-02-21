@@ -81,7 +81,15 @@ def filter_logs(logs_dict, target_recipe, read_data = True, read_layers = True, 
         loaded to avoid doubling the effort. setting force_overwrite to True
         will reload the data.
 
-    """
+    Returns
+    -------
+    filtered_logs : dict
+        Dict identical to logs_dict, but filtered to only include those logs
+        containing references to target_recipe. Additionally, if read_layers ==
+        True, then an extra key 'layers' is added containing a list of layer
+        indices which match target_recipe. If read_data == True an extra key
+        'data' is added containing a pandas.DataFrame object holding all the raw
+        logfile data."""
 
     #Initialize empty dict
     filtered_logs = {}
@@ -113,6 +121,72 @@ def filter_logs(logs_dict, target_recipe, read_data = True, read_layers = True, 
     return filtered_logs
 
 def get_means(logs_dict, target_recipe, **kwargs):
+    """Calculate the mean, standard deviation, and length of all instances of
+    target_recipe found in the logfiles in logs_dict.
+
+    Parameters
+    ----------
+    logs_dict : dict
+        Dict where key is path to logfile and value is dict of type returned by
+        get_recipe.
+
+    target_recipe : string
+        Name of the recipe to get data for.
+
+    Keyword Arguments
+    -----------------
+    keys_to_ignore : list
+        List of column headings (keys) in logfile data to ignore. Can't take an
+        average of a column full of text descriptors. Default list is:
+        `['Layer #', 'Wafer # Loaded', 'Sub. Rot.', 'Radak', 'Dep. Program#']`.
+
+    matches_to_ignore : list
+        List of partial column headings to ignore. For instance, whether or not
+        the plasma is on is not a value that averages, so we exclude all columns
+        containing 'Plasma'. Default is `['Shutter', 'Plasma', 'SP']`.
+
+    sources_to_ignore : list
+        List of sources to exclude. Useful for skipping sources that were turned
+        off. This list can contain partial matches. For instance, passing
+        sources_to_ignore = ['#5'] will ignore all column headings containing
+        '#5'.
+
+    outlier_sigma : float
+        If ignore outliers is turned on, this is the threshold for excluding
+        points; any datapoint with a standard deviation greater than
+        outlier_sigma will be cut. Default is 5.
+
+    strip_outliers : bool
+        Whether or not to exclude outliers from data. Mean and standard
+        deviation will be calculated twice. Once to exclude outliers, and once
+        for the final value. Default is False.
+
+    min_length : float
+        Any recipe lasting less than min_length minutes will be excluded from the
+        final results. This is useful for excluding purposefully aborted jobs.
+        Default is 0.
+
+    avg_interval : [start, end]
+        A tuple or list conatining the starting and ending index of the
+        sub-array to average over. This is useful as some recipes start
+        presputtering another target before they finish, and you may not want to
+        include that step function in the average. Note that `start` and `end`
+        are in points, not time. A point covers roughly 5 seconds.
+
+    Returns
+    -------
+    output_dict : dict
+        Dict containing the following key-value pairs:
+            * 'means' : dict containing the means of each recipe ordered by
+              date, indexed by logfile column name.
+            * 'stdevs' : dict containing the standard deviation of each recipe
+              ordered by date, indexed by logfile column name.
+            * 'lengths' : list containing the lengths of each recipe, ordered
+              by date.
+            * 'times' : list containing the dates when the recipes were run.
+            * 'keys' : list containing the keys (column headings) for which
+              means were calculated.
+            * 'recipe' : string containing target_recipe."""
     #Get all available keys
     keys_all = list(logs_dict.values())[0]['data'].keys()
 
@@ -212,6 +286,25 @@ def get_means(logs_dict, target_recipe, **kwargs):
 
 
 def keys_parser(keys, ignore_keys = [], match_ignore = []):
+    """Parse a list of keys and remove ones that don't fit.
+
+    Parameters
+    ----------
+    keys : list
+        List of strings.
+
+    ignore_keys : list
+        List of strings. These keys will be removed if there is an exact match.
+
+    match_ignore : list
+        List of strings. Any key that contains as a substring one of the strings
+        in match_ignore will be removed.
+
+    Returns
+    -------
+    filtered_keys : list
+        List of strings."""
+
     for key in keys:
         if any(match in key for match in match_ignore):
             ignore_keys.append(key)
@@ -222,6 +315,40 @@ def keys_parser(keys, ignore_keys = [], match_ignore = []):
     return filtered_keys
 
 def plot_means(means_dict, **kwargs):
+    """Plot all the data returned by get_means.
+
+    Parameters
+    ----------
+    means_dict : dict
+        A dict of the format returned by get_means.
+
+    Keyword Arguments
+    -----------------
+    return_fig : bool
+        Whether or not function returns a matplotlib.figure object. Default is
+        False.
+
+    overlay_fig : matplotlib.figure
+        Can pass a figure returned by plot_means and it will overplot a second
+        recipe's data. This only works if all the relevant column headings
+        between recipes are the same.
+
+    num_rows : int
+        How many rows of subplots the resulting figure shoudl have. Default is 3.
+
+    grid_kwargs : dict
+        A dict of keyword arguments that will be passed through to matplotlib's
+        grid function. Default is {}.
+
+    err_kwargs : varied
+        Any extra keyword arguments that are passed will be bundled into
+        err_kwargs and passed through to matplotlib.pyplot.errorbar().
+
+    Returns
+    -------
+    fig : matplotlib.figure
+        If return_fig == True, then returns the figure object. Otherwise there
+        is no return value."""
 
     keys_to_plot = means_dict['keys']
 
@@ -303,6 +430,70 @@ def plot_means(means_dict, **kwargs):
         return fig
 
 def overplot_all(logs_dict, target_recipe, **kwargs):
+    """Plot all instances of target_recipe vs. time on top of each other.
+
+    Parameters
+    ----------
+    logs_dict : dict
+        Dict of format returned by calling filter_logs with read_data set to True.
+
+    Keyword Arguments
+    -----------------
+    keys_to_ignore : list
+        List of column headings (keys) in logfile data to ignore. Can't take an
+        average of a column full of text descriptors. Default list is:
+        `['Layer #', 'Wafer # Loaded', 'Sub. Rot.', 'Radak', 'Dep. Program#']`.
+
+    matches_to_ignore : list
+        List of partial column headings to ignore. For instance, whether or not
+        the plasma is on is not a value that averages, so we exclude all columns
+        containing 'Plasma'. Default is `['Shutter', 'Plasma', 'SP']`.
+
+    sources_to_ignore : list
+        List of sources to exclude. Useful for skipping sources that were turned
+        off. This list can contain partial matches. For instance, passing
+        sources_to_ignore = ['#5'] will ignore all column headings containing
+        '#5'.
+
+    outlier_sigma : float
+        If ignore outliers is turned on, this is the threshold for excluding
+        points; any datapoint with a standard deviation greater than
+        outlier_sigma will be cut. Default is 5.
+
+    strip_outliers : bool
+        Whether or not to exclude outliers from data. Mean and standard
+        deviation will be calculated twice. Once to exclude outliers, and once
+        for the final value. Default is False.
+
+    min_recipe_time : float
+        Any recipe lasting less than min_recipe_time minutes will be excluded
+        from the final results. This is useful for excluding purposefully
+        aborted jobs. Default is 0.
+
+    num_rows : int
+        The number of rows in the subplot grid.
+
+    overplot_vlines : list
+        A list of indices where vertical lines should be plotted. This is
+        useful for visualizing the avg_interval passed to get_means.
+
+    vline_kwargs : dict
+        A dict of keyword arguments passed to matplotlib.Axis.axvline() to
+        enable customization of appearance. Default is {color : 0.4,
+        linestyle : '--'}.
+
+    return_fig : bool
+        Whether or not to return the figure object. Default is False.
+
+    plt_kwargs : varied
+        Any remaining keyword arguments will be bundled and passed on to
+        matplotlib.Axis.plot().
+
+    Returns
+    -------
+    fig : matplotlib.Figure
+        If return_fig == True, then fig is returned. Otherwise nothing is
+        returned."""
 
     #Get all available keys
     all_keys = list(logs_dict.values())[0]['data'].keys()
