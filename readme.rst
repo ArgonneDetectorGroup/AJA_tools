@@ -2,18 +2,18 @@ AJA Tools (alpha realease)
 ==========================
 Some tools to help with loading and parsing AJA sputter tool logfiles.
 
-Description of files
---------------------
+Example
+-------
+Probably the thing you will want the most is just to plot a logfile:
 
-  * ``recipe_parser.py`` : Contains code for figuring out what processes were called
-    during a specific job, and aligning logfiles with the right job.
-  * ``logfile_tools.py`` : Tools for loading, plotting, and filtering out data from
-    logfiles based on specific recipes.
-  * ``Example1.ipynb`` : Jupyter notebook with a short tutorial for using some of
-    the functions contained in recipe_parser.py.
-  * ``Example2.ipynb`` : Jupyter notebook with a short tutorial for using the
-    plotting code in logfile_tools.py to do a timeline analysis of a specific
-    recipe step.
+.. code:: python
+
+  import AJA_tools.logfile_tools as lt
+  fig = lt.plot_log('/path/to/logfile.dlg', 'metals')
+  fig.save_fig('/path/to/figure.png', bbox_to_inches='tight')
+
+Pretty easy, right?! At the moment there is only support for the ANL metals sputter tool.
+
 
 Installation
 ------------
@@ -25,7 +25,6 @@ For now, you can just clone this repository into some directory and then do some
   import sys
   sys.path.append('/path/to/parent/directory')
 
-  import AJA_tools.recipe_parser as rp
   import AJA_tools.logfile_tools as lt
 
 Reuse and citation
