@@ -17,15 +17,14 @@ Pretty easy, right?! At the moment there is only support for the ANL metals sput
 
 Installation
 ------------
-Plans are in progress to make these scripts into a proper package hosted on pip.
-For now, you can just clone this repository into some directory and then do something like:
+After pulling in the code from github, open a terminal and run the following:
 
-.. code:: python
+.. code:: bash
 
-  import sys
-  sys.path.append('/path/to/parent/directory')
+  pip install -e /path/to/AJA_tools
 
-  import AJA_tools.logfile_tools as lt
+That ensures that when you pull down the latest changes, or switch to a
+different branch you'll always be using the code in the repo directly.
 
 Reuse and citation
 ------------------
