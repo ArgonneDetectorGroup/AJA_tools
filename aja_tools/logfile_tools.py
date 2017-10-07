@@ -6,9 +6,6 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-class RecipeWarning(UserWarning):
-    """Warnings related to recipes."""
-    pass
 
 def nested_glob(path, extension):
     """This just searches all subdirectories of path for anything with the right extension"""
@@ -146,7 +143,7 @@ def parse_jobfile(file_path, return_raw_recipe = False):
                 raw_recipe.append((start_ix, recipe))
                 start_ix = -1
             else:
-                warnings.warn('Job file may be corrupt, missing final recipe step: '+ job_name, RecipeWarning)
+                warnings.warn('Job file may be corrupt, missing final recipe step: '+ job_name)
                 start_ix = -1
 
     #Make one more pass through to handle duplicates that
