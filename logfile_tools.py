@@ -40,10 +40,15 @@ def build_logs_list(path, jobs = None):
     logfiles = nested_glob(path, '.dlg')
 
     if jobs is None:
-        jobs = {}
-        
+        try:
+            warnings.warn("Attempting to locate jobs in path")
+            jobs = build_jobs_dict(path)
+        except:
+            jobs = {}
+
+    logs = []
     for logfile in logfiles:
-        job_name = get_job(logfile)[0]
+        job_name = get_job(logfile)
         job_exists = job_name in jobs.keys()
         with open(logfile, 'r') as f:
             headers = f.readline()
