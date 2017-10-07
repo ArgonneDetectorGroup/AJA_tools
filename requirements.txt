@@ -1,0 +1,4 @@
+#####Stricter version requirements than setup.py#####
+matplotlib >=1.5.3
+pandas
+numpy
