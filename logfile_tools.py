@@ -35,10 +35,13 @@ def build_jobs_dict(path):
 
     return jobs
 
-def build_logs_dict(path, jobs):
+def build_logs_list(path, jobs = None):
     """Build up a list of lognames sorted by last created. Each element of the list is a dict with the jobname, recipe, path, and datetime."""
     logfiles = nested_glob(path, '.dlg')
 
+    if jobs is None:
+        jobs = {}
+        
     for logfile in logfiles:
         job_name = get_job(logfile)[0]
         job_exists = job_name in jobs.keys()
