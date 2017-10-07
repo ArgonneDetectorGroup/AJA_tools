@@ -182,7 +182,7 @@ def plot_log(logfile, logtype, **kwargs):
     show_layers = kwargs.pop('show_layers', False)
 
     #Load in the data
-    dat = lt.import_logfile(logfile)
+    dat = import_logfile(logfile)
 
     #Convert boolean to boolean
     dat = dat.replace(to_replace='Closed', value=0)
