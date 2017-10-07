@@ -15,7 +15,7 @@ setup(
     license = 'MIT',
     url = 'http://github.com/sebastianbocquet/pygtc',
     packages = ['aja_tools'],
-    long_description = open('README.rst').read(),
+    long_description = open('readme.rst').read(),
     install_requires = [
         'numpy',
         'matplotlib',
