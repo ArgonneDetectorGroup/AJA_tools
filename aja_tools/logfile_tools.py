@@ -180,8 +180,13 @@ def plot_log(logfile, logtype, **kwargs):
     if logtype == 'metals':
         target_sources = {'RF#1':'Substrate bias', 'RF#2':'Au', 'DC#1':'Ti old', 'DC#5A':'empty', 'DC#5B':'AlMn 950', 'DC#5C':'Ti new', 'DC#5D':'AlMn 850'}
         gas_sources = {'Gas#1 Flow':'Ar', 'Gas#2 Flow':'N', 'Gas#3 Flow':'O'}
+    elif logtype == 'dielectrics':
+        target_sources = {'RF#1':'Substrate bias', 'RF#2':'SiOx gun 3', 'RF#4A':'SiOx gun 2', 'RF#4B':'Si', 'RF#4C':'Ti', 'DC#5A':'Palladium', }
+        gas_sources = {'Gas#1 Flow':'Ar', 'Gas#2 Flow':'O', 'Gas#3 Flow':'N'}
     else:
-        assert False, "Only metal logs supported for plotting at the moment"
+        logtype = None
+        target_sources = None
+        gas_sources = {'Gas#1 Flow':'Gas#1 Flow', 'Gas#2 Flow':'Gas#2 Flow', 'Gas#3 Flow':'Gas#3 Flow'}
 
     #Allow for custom figure sizing
     figsize = kwargs.pop('figsize', None)
@@ -206,11 +211,20 @@ def plot_log(logfile, logtype, **kwargs):
 
     #Figure out how many guns were on at some point and build up the plot
     sources_present = []
-    for source in target_sources.keys():
+    if (target_sources is not None):
+        for source in target_sources.keys():
+            for col in columns:
+                if source in col:
+                    sources_present.append(source)
+                    break
+    else:
         for col in columns:
-            if source in col:
-                sources_present.append(source)
-                break
+            if any(source in col for source in ['RF#', 'DC#']):
+                sources_present.append(col.split(' ')[0])
+        sources_present = list(set(sources_present))
+        target_sources = {}
+        for source in sources_present:
+            target_sources[source] = source
 
     #For each source there are Shutter, Plasma, and target parameters axes
     #Them there is the gas axis, and temp, pressure, and rotation
@@ -268,7 +282,11 @@ def plot_log(logfile, logtype, **kwargs):
                 break
 
         if 'Gas' in col:
-            axes[-4].semilogy(dat[col], color=plt.cm.Vega10(['Ar', 'N', 'O'].index(gas_sources[col])+7), label=gas_sources[col])
+            if logtype == None:
+                gas_index_list = ['Gas#1 Flow', 'Gas#2 Flow', 'Gas#3 Flow']
+            else:
+                gas_index_list = ['Ar', 'N', 'O']
+            axes[-4].semilogy(dat[col], color=plt.cm.Vega10(gas_index_list.index(gas_sources[col])+7), label=gas_sources[col])
         elif col == 'C.M. Press.':
             axes[-3].plot(dat[col], color='k', alpha=0.7, label=col)
         elif col == 'Sub. Temp.':
