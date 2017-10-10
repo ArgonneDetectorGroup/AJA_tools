@@ -191,6 +191,9 @@ def plot_log(logfile, logtype, **kwargs):
     #Allow for custom figure sizing
     figsize = kwargs.pop('figsize', None)
 
+    #Or for a custom figure size x-multiplier
+    figsize_xmult = kwargs.pop('figsize_xmult', 1.0)
+
     #Whether or not to show the layer subdivisions
     show_layers = kwargs.pop('show_layers', False)
 
@@ -235,7 +238,7 @@ def plot_log(logfile, logtype, **kwargs):
 
     #Set up the figure
     if figsize is None:
-        figsize = (6*len(wafers), len(sources_present)*4+3.33)
+        figsize = (figsize_xmult*6*len(wafers), len(sources_present)*4+3.33)
 
     fig, axes = plt.subplots(nrows = len(height_ratios), ncols = 1,
                              figsize=figsize, sharex=True,
