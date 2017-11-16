@@ -234,7 +234,7 @@ def plot_log(logfile, logtype, **kwargs):
 
     #For each source there are Shutter, Plasma, and target parameters axes
     #Them there is the gas axis, and temp, pressure, and rotation
-    height_ratios = [1,1,4]*len(sources_present)+[2]+[1]*len(gas_sources.keys())
+    height_ratios = [1,1,4]*len(sources_present)+[2]+[1]*3
 
     #Figure out how many/which wafers loaded for autosizing
     if 'Wafer # Loaded' in dat.columns:
@@ -296,7 +296,7 @@ def plot_log(logfile, logtype, **kwargs):
                 break
 
         if 'Gas' in col:
-            axes[-4].semilogy(dat[col], color=plt.cm.Vega10(list(sorted(gas_sources.keys())).index(col)+7), label=gas_sources[col])
+            axes[-4].semilogy(dat[col], color=plt.cm.Vega10(sorted(gas_sources.keys()).index(col)+7), label=gas_sources[col])
         elif col == 'C.M. Press.':
             axes[-3].plot(dat[col], color='k', alpha=0.7, label=col)
         elif col == 'Sub. Temp.':
