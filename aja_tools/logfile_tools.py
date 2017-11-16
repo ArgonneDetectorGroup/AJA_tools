@@ -234,7 +234,7 @@ def plot_log(logfile, logtype, **kwargs):
 
     #For each source there are Shutter, Plasma, and target parameters axes
     #Them there is the gas axis, and temp, pressure, and rotation
-    height_ratios = [1,1,4]*len(sources_present)+[2]+[1]*3
+    height_ratios = [1,1,4]*len(sources_present)+[2]+[1]*len(gas_sources.keys())
 
     #Figure out how many/which wafers loaded for autosizing
     if 'Wafer # Loaded' in dat.columns:
