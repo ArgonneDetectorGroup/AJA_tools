@@ -214,7 +214,6 @@ def plot_log(logfile, logtype, **kwargs):
 
     #Figure out how many guns were on at some point and build up the plot
     sources_present = []
-    gas_sources = {}
     if (target_sources is not None):
         for source in target_sources.keys():
             for col in columns:
@@ -222,6 +221,7 @@ def plot_log(logfile, logtype, **kwargs):
                     sources_present.append(source)
                     break
     else:
+        gas_sources = {}
         for col in columns:
             if any(source in col for source in ['RF#', 'DC#']):
                 sources_present.append(col.split(' ')[0])
@@ -234,7 +234,7 @@ def plot_log(logfile, logtype, **kwargs):
 
     #For each source there are Shutter, Plasma, and target parameters axes
     #Them there is the gas axis, and temp, pressure, and rotation
-    height_ratios = [1,1,4]*len(sources_present)+[2]+[1]*3
+    height_ratios = [1,1,4]*len(sources_present)+[len(gas_sources)]+[1]*3
 
     #Figure out how many/which wafers loaded for autosizing
     if 'Wafer # Loaded' in dat.columns:
