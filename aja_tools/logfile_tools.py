@@ -186,7 +186,7 @@ def plot_log(logfile, logtype, **kwargs):
     else:
         logtype = None
         target_sources = None
-        gas_sources = {'Gas#1 Flow':'Gas#1 Flow', 'Gas#2 Flow':'Gas#2 Flow', 'Gas#3 Flow':'Gas#3 Flow'}
+        gas_sources = None
 
     #Allow for custom figure sizing
     figsize = kwargs.pop('figsize', None)
@@ -214,6 +214,7 @@ def plot_log(logfile, logtype, **kwargs):
 
     #Figure out how many guns were on at some point and build up the plot
     sources_present = []
+    gas_sources = {}
     if (target_sources is not None):
         for source in target_sources.keys():
             for col in columns:
@@ -224,6 +225,8 @@ def plot_log(logfile, logtype, **kwargs):
         for col in columns:
             if any(source in col for source in ['RF#', 'DC#']):
                 sources_present.append(col.split(' ')[0])
+            if 'Gas#' in col:
+                gas_sources[col] = col
         sources_present = list(set(sources_present))
         target_sources = {}
         for source in sources_present:
@@ -234,7 +237,10 @@ def plot_log(logfile, logtype, **kwargs):
     height_ratios = [1,1,4]*len(sources_present)+[2]+[1]*3
 
     #Figure out how many/which wafers loaded for autosizing
-    wafers = dat['Wafer # Loaded'].unique()
+    if 'Wafer # Loaded' in dat.columns:
+        wafers = dat['Wafer # Loaded'].unique()
+    else:
+        wafers = [1]
 
     #Set up the figure
     if figsize is None:
@@ -254,7 +260,12 @@ def plot_log(logfile, logtype, **kwargs):
 
     #Optionally plot vertical lines for each layer change
     if show_layers:
-        v_by_layer = dat.groupby('Layer #')
+        if 'Layer #' in dat.columns:
+            layer_id = 'Layer #'
+        elif 'layer #' in dat.columns:
+            layer_id = 'layer #'
+            
+        v_by_layer = dat.groupby(layer_id)
         for (layer, v_layer) in v_by_layer:
             for ax in axes:
                 ax.axvline(v_layer.index[0], color='k', linestyle='--', linewidth=0.2)
@@ -285,10 +296,6 @@ def plot_log(logfile, logtype, **kwargs):
                 break
 
         if 'Gas' in col:
-            if logtype == None:
-                gas_index_list = ['Gas#1 Flow', 'Gas#2 Flow', 'Gas#3 Flow']
-            else:
-                gas_index_list = ['Ar', 'N', 'O']
             axes[-4].semilogy(dat[col], color=plt.cm.Vega10(gas_index_list.index(gas_sources[col])+7), label=gas_sources[col])
         elif col == 'C.M. Press.':
             axes[-3].plot(dat[col], color='k', alpha=0.7, label=col)
