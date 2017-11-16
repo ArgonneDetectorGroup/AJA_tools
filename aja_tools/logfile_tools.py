@@ -296,7 +296,7 @@ def plot_log(logfile, logtype, **kwargs):
                 break
 
         if 'Gas' in col:
-            axes[-4].semilogy(dat[col], color=plt.cm.Vega10(gas_index_list.index(gas_sources[col])+7), label=gas_sources[col])
+            axes[-4].semilogy(dat[col], color=plt.cm.Vega10(list(sorted(gas_sources.keys())).index(col)+7), label=gas_sources[col])
         elif col == 'C.M. Press.':
             axes[-3].plot(dat[col], color='k', alpha=0.7, label=col)
         elif col == 'Sub. Temp.':
